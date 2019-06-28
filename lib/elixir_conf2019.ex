@@ -2,31 +2,7 @@ defmodule ElixirConf2019 do
   alias HTTPoison
   alias Floki
 
-  defmodule Session do
-    defstruct ~w[speaker company audience topic title github twitter]a
-
-    def new(opts) do
-      struct!(__MODULE__, opts)
-    end
-  end
-
-  def run() do
-    speaker_urls()
-    |> Task.async_stream(&get_session_page/1)
-    |> Enum.map(&parse_session_page/1)
-  end
-
-  defp parse_session_page({:ok, result}) do
-    result
-    |> Floki.parse()
-    |> process_selector_list()
-    |> process_speaker_links()
-    |> Session.new()
-  end
-
-  defp parse_session_page(error) do
-    error
-  end
+  alias ElixirConf2019.Session
 
   defp process_speaker_links(token) do
     token.parsed
@@ -52,19 +28,19 @@ defmodule ElixirConf2019 do
     end)
   end
 
-  defp find_speaker_links(parsed) do
-    parsed
-    |> Floki.find(".w-full.flex.justify-around a")
-    |> Floki.attribute("href")
-    |> Enum.reject(fn url -> url in ~w[/2019#venue /2019/policies] end)
-  end
-
   defp github?(url) do
     String.starts_with?(url, "https://github.com")
   end
 
   defp twitter?(url) do
     String.starts_with?(url, "https://twitter.com")
+  end
+
+  defp find_speaker_links(parsed) do
+    parsed
+    |> Floki.find(".w-full.flex.justify-around a")
+    |> Floki.attribute("href")
+    |> Enum.reject(fn url -> url in ~w[/2019#venue /2019/policies] end)
   end
 
   defp process_selector_list(parsed) do
@@ -93,25 +69,48 @@ defmodule ElixirConf2019 do
     ]
   end
 
-  defp get_session_page(url) do
-    case HTTPoison.get("https://elixirconf.com" <> url) do
-      {:ok, %HTTPoison.Response{body: body}} ->
-        body
+  defp speaker_urls(url) do
+    load_page(url, &parse_into_speaker_urls/1)
+  end
+
+  defp session_page(url) do
+    load_page(url, &parse_into_session/1)
+  end
+
+  defp parse_into_session(html) do
+    html
+    |> Floki.parse()
+    |> process_selector_list()
+    |> process_speaker_links()
+    |> Session.new()
+  end
+
+  defp parse_into_speaker_urls(html) do
+    html
+    |> Floki.parse()
+    |> Floki.find("a")
+    |> Floki.attribute("href")
+    |> Enum.filter(fn url -> String.starts_with?(url, "/2019/speakers/") end)
+  end
+
+  defp load_page(ending, function) do
+    case HTTPoison.get("https://elixirconf.com/" <> ending) do
+      {:ok, %HTTPoison.Response{body: html}} ->
+        function.(html)
       error ->
         error
     end
   end
 
-  defp speaker_urls() do
-    case HTTPoison.get("https://elixirconf.com/2019") do
-      {:ok, %HTTPoison.Response{body: body}} ->
-        body
-        |> Floki.parse()
-        |> Floki.find("a")
-        |> Floki.attribute("href")
-        |> Enum.filter(fn url -> String.starts_with?(url, "/2019/speakers/") end)
-      error ->
-        error
-    end
+  defp sessions(speaker_urls) do
+    speaker_urls
+    |> Task.async_stream(&session_page/1)
+    |> Enum.map(fn {:ok, result} -> result end)
+  end
+
+  def run() do
+    "2019"
+    |> speaker_urls()
+    |> sessions()
   end
 end
