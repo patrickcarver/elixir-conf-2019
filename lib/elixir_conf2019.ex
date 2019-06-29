@@ -8,10 +8,10 @@ defmodule ElixirConf2019 do
     token.parsed
     |> find_speaker_links()
     |> create_speaker_link_map()
-    |> merge_speaker_links_into_session(token.session)
+    |> add_speaker_links(token.session)
   end
 
-  defp merge_speaker_links_into_session(links, session) do
+  defp add_speaker_links(links, session) do
     Map.merge(session, links)
   end
 
@@ -69,14 +69,6 @@ defmodule ElixirConf2019 do
     ]
   end
 
-  defp speaker_urls(url) do
-    load_page(url, &parse_into_speaker_urls/1)
-  end
-
-  defp session_page(url) do
-    load_page(url, &parse_into_session/1)
-  end
-
   defp parse_into_session(html) do
     html
     |> Floki.parse()
@@ -100,6 +92,14 @@ defmodule ElixirConf2019 do
       error ->
         error
     end
+  end
+
+  defp speaker_urls(url) do
+    load_page(url, &parse_into_speaker_urls/1)
+  end
+
+  defp session_page(url) do
+    load_page(url, &parse_into_session/1)
   end
 
   defp sessions(speaker_urls) do
