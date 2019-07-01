@@ -1,4 +1,8 @@
 defmodule ElixirConf2019.Page do
+  @moduledoc """
+  Load page and invoke function to parse
+  """
+
   alias HTTPoison
 
   def parse(ending, function) do

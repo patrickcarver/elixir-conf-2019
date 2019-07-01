@@ -1,11 +1,14 @@
 defmodule ElixirConf2019.Processing.Selectors do
   @moduledoc """
+  Extract session data from page
   """
 
   alias Floki
 
+  alias ElixirConf2019.Processing.Token
+
   def process(parsed) do
-    acc = %{parsed: parsed, session: %{}}
+    acc = Token.new(parsed)
     Enum.reduce(selectors(), acc, fn {key, value}, token ->
       text = get_text(token.parsed, value)
       new_session = Map.put(token.session, key, text)

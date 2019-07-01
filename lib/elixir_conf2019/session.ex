@@ -5,12 +5,12 @@ defmodule ElixirConf2019.Session do
 
   alias Floki
 
-  alias ElixirConf2019.Processing.{Selectors, SpeakerLinks}
+  alias ElixirConf2019.Processing.{Selectors, SpeakerLinks, Token}
 
   defstruct ~w[speaker company audience topic title github twitter]a
 
-  def new(opts) do
-    struct!(__MODULE__, opts)
+  def new do
+    %__MODULE__{}
   end
 
   def parse(html) do
@@ -18,6 +18,12 @@ defmodule ElixirConf2019.Session do
     |> Floki.parse()
     |> Selectors.process()
     |> SpeakerLinks.process()
-    |> new()
+    |> add_speaker_links()
+  end
+
+  defp add_speaker_links(%Token{} = token) do
+    Enum.reduce(token.speaker_links, token.session, fn {key, value}, session ->
+      Map.put(session, key, value)
+    end)
   end
 end

@@ -1,5 +1,6 @@
 defmodule ElixirConf2019.SpeakerUrls do
   @moduledoc """
+  Create list of links to session pages
   """
 
   alias Floki
