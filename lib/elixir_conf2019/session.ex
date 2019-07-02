@@ -22,8 +22,8 @@ defmodule ElixirConf2019.Session do
   end
 
   defp add_speaker_links(%Token{} = token) do
-    Enum.reduce(token.speaker_links, token.session, fn {key, value}, session ->
-      Map.put(session, key, value)
-    end)
+    token.session
+    |> Map.put(:github, token.speaker_links.github)
+    |> Map.put(:twitter, token.speaker_links.twitter)
   end
 end
