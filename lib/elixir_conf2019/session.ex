@@ -9,6 +9,10 @@ defmodule ElixirConf2019.Session do
 
   defstruct ~w[speaker company audience topic title github twitter]a
 
+  def keys do
+    %Session{}
+  end
+
   def new do
     %__MODULE__{}
   end
